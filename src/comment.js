@@ -24,9 +24,15 @@ export function commentForMonorepo(
         const plus = pdiff > 0 ? "+" : "";
         const arrow = pdiff === 0 ? "" : pdiff < 0 ? "▾" : "▴";
 
-        const pdiffHtml = baseLcov
-            ? th(arrow, " ", plus, pdiff.toFixed(2), "%")
-            : "";
+        const getColor = () => {
+        	if (pdiff === 0) return 'inherit';
+        	if (pdiff < 0) return 'red';
+        	if (pdiff > 0) return 'green';
+				};
+
+        const diffTh = `<div style="color:${getColor};"}>${th(arrow, " ", plus, pdiff.toFixed(2), "%")}</div>`;
+
+        const pdiffHtml = baseLcov ? diffTh : "";
 
         return `${table(
             tbody(
