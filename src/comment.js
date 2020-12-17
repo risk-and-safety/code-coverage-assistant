@@ -3,6 +3,28 @@ import { percentage } from "./lcov";
 import { tabulate } from "./tabulate";
 
 /**
+ * Compares two arrays of objects and returns with unique lines update
+ * @param {number} pdiff value from diff percentage
+ * @returns {string} emoji string for negative/positive pdiff
+ */
+const renderEmoji = pdiff => {
+    if (pdiff < 0) return "🔴";
+    if (pdiff >= 0) return "🟢";
+};
+
+/**
+ * Compares two arrays of objects and returns with unique lines update
+ * @param {Array} otherArray
+ * @returns {Function} function with filtering non original lines
+ */
+const comparer = otherArray => current =>
+    otherArray.filter(
+        other =>
+            other.lines.found === current.lines.found &&
+            other.lines.hit === current.lines.hit,
+    ).length === 0;
+
+/**
  * Github comment for monorepo
  * @param {Array<{packageName, lcovPath}>} lcovArrayForMonorepo
  * @param {{Array<{packageName, lcovBasePath}>}} lcovBaseArrayForMonorepo
@@ -24,15 +46,14 @@ export function commentForMonorepo(
         const plus = pdiff > 0 ? "+" : "";
         const arrow = pdiff === 0 ? "" : pdiff < 0 ? "▾" : "▴";
 
-        const getColor = () => {
-        	if (pdiff === 0) return 'inherit';
-        	if (pdiff < 0) return 'red';
-        	if (pdiff > 0) return 'green';
-				};
+        const pdiffHtml = baseLcov ? th(renderEmoji(pdiff), " ", arrow, " ", plus, pdiff.toFixed(2), "%") : "";
+				let report = lcovObj.lcov;
 
-        const diffTh = `<div style="color:${getColor};"}>${th(arrow, " ", plus, pdiff.toFixed(2), "%")}</div>`;
-
-        const pdiffHtml = baseLcov ? diffTh : "";
+        if (baseLcov) {
+            const onlyInLcov = lcovObj.lcov.filter(comparer(baseLcov));
+            const onlyInBefore = baseLcov.filter(comparer(lcovObj.lcov));
+            report = onlyInBefore.concat(onlyInLcov);
+        }
 
         return `${table(
             tbody(
@@ -44,7 +65,7 @@ export function commentForMonorepo(
             ),
         )} \n\n ${details(
             summary("Coverage Report"),
-            tabulate(lcovObj.lcov, options),
+            tabulate(report, options),
         )} <br/>`;
     });
 
@@ -66,7 +87,15 @@ export function comment(lcov, before, options) {
     const plus = pdiff > 0 ? "+" : "";
     const arrow = pdiff === 0 ? "" : pdiff < 0 ? "▾" : "▴";
 
-    const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
+		const pdiffHtml = before ? th(renderEmoji(pdiff), " ", arrow, " ", plus, pdiff.toFixed(2), "%") : "";
+
+    let report = lcov;
+
+    if (before) {
+        const onlyInLcov = lcov.filter(comparer(before));
+        const onlyInBefore = before.filter(comparer(lcov));
+        report = onlyInBefore.concat(onlyInLcov);
+    }
 
     return fragment(
         `Coverage after merging ${b(options.head)} into ${b(
@@ -74,7 +103,7 @@ export function comment(lcov, before, options) {
         )} <p></p>`,
         table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml))),
         "\n\n",
-        details(summary("Coverage Report"), tabulate(lcov, options)),
+        details(summary("Coverage Report"), tabulate(report, options)),
     );
 }
 

@@ -108,7 +108,7 @@ async function main() {
         commit: context.payload.pull_request.head.sha,
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
-        base: context.payload.pull_request.base.ref,
+        base: context.payload.pull_request.base.ref
     };
 
     const lcov = !monorepoBasePath && (await parse(raw));
