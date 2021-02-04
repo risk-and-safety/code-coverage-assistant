@@ -6089,8 +6089,8 @@ function comment(lcov, before, options) {
             options.base,
         )} <p></p>`,
         table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml))),
-        "\n\n",
-        details(summary("Coverage Report"), tabulate(lcov, options)),
+        "\n\n"
+        // details(summary("Coverage Report"), tabulate(lcov, options)),
     );
 
     console.log('generatedFragment', generatedFragment);
