@@ -6326,7 +6326,7 @@ async function main() {
 		console.log('lcovFile path', lcovFile);
 		console.log('core.getInput("lcov-file")', core$1.getInput("lcov-file"));
 		// console.log('lcovFile raw', raw)
-		console.log('lcovFile parsed', lcov);
+		// console.log('lcovFile parsed', lcov)
 
     const client = github$1.getOctokit(token);
 
