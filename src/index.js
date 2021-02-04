@@ -55,6 +55,9 @@ async function main() {
 
     const token = core.getInput("github-token");
     const lcovFile = core.getInput("lcov-file") || "./coverage/lcov.info";
+
+
+
     const baseFile = core.getInput("lcov-base");
     // Add base path for monorepo
     const monorepoBasePath = core.getInput("monorepo-base-path");
@@ -66,6 +69,8 @@ async function main() {
         console.log(`No coverage report found at '${lcovFile}', exiting...`);
         return;
     }
+
+
 
     const baseRaw =
         baseFile &&
@@ -113,6 +118,11 @@ async function main() {
 
     const lcov = !monorepoBasePath && (await parse(raw));
     const baselcov = baseRaw && (await parse(baseRaw));
+
+		console.log('lcovFile path', lcovFile)
+		console.log('core.getInput("lcov-file")', core.getInput("lcov-file"))
+		console.log('lcovFile raw', raw)
+		console.log('lcovFile parsed', lcov)
 
     const client = github.getOctokit(token);
 
