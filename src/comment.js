@@ -62,7 +62,7 @@ export function comment(lcov, before, options) {
 
     const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
 
-    return fragment(
+    const fragment = fragment(
         `Coverage after merging ${b(options.head)} into ${b(
             options.base,
         )} <p></p>`,
@@ -70,6 +70,10 @@ export function comment(lcov, before, options) {
         "\n\n",
         details(summary("Coverage Report"), tabulate(lcov, options)),
     );
+
+    console.log('fragment', fragment)
+
+    return fragment
 }
 
 /**
