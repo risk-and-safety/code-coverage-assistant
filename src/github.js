@@ -49,32 +49,36 @@ const deleteComments = async ({ client, context, comments }) =>
     );
 
 const upsertComment = async ({ client, context, prNumber, body }) => {
-    const existingComments = await listComments({
-        client,
-        context,
-        prNumber,
-    });
-    const last = existingComments.pop();
+	try {
+		const existingComments = await listComments({
+			client,
+			context,
+			prNumber,
+		});
+		const last = existingComments.pop();
 
-    await deleteComments({
-        client,
-        context,
-        comments: existingComments,
-    });
+		await deleteComments({
+			client,
+			context,
+			comments: existingComments,
+		});
 
-    return last
-        ? updateComment({
-              client,
-              context,
-              body,
-              commentId: last.id,
-          })
-        : insertComment({
-              client,
-              context,
-              prNumber,
-              body,
-          });
+		return last
+			? updateComment({
+				client,
+				context,
+				body,
+				commentId: last.id,
+			})
+			: insertComment({
+				client,
+				context,
+				prNumber,
+				body,
+			});
+	} catch (e) {
+		console.log('something went wrong:', e)
+	}
 };
 
 module.exports = {
