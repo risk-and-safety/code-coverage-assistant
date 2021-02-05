@@ -129,6 +129,7 @@ async function main() {
                   lcovBaseArrayForMonorepo,
                   options,
               ),
+				hiddenHeader: appName ? `<!-- ${appName}-jest-reporter-action -->` : `<!-- monorepo-jest-reporter-action -->`
     });
 }
 

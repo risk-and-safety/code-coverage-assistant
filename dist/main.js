@@ -6172,11 +6172,10 @@ function diffForMonorepo(
 // Every comment written by our action will have this hidden
 // header on top, and will be used to identify which comments
 // to update/delete etc
-const hiddenHeader = `<!-- monorepo-jest-reporter-action -->`;
 
-const appendHiddenHeaderToComment = body => hiddenHeader + body;
+const appendHiddenHeaderToComment = (body, hiddenHeader) => hiddenHeader + body;
 
-const listComments = async ({ client, context, prNumber, commentHeader }) => {
+const listComments = async ({ client, context, prNumber, commentHeader, hiddenHeader }) => {
     const { data: existingComments } = await client.issues.listComments({
         ...context.repo,
         issue_number: prNumber,
@@ -6209,11 +6208,12 @@ const deleteComments = async ({ client, context, comments }) =>
         ),
     );
 
-const upsertComment = async ({ client, context, prNumber, body }) => {
+const upsertComment = async ({ client, context, prNumber, body, hiddenHeader }) => {
     const existingComments = await listComments({
         client,
         context,
         prNumber,
+			  hiddenHeader,
     });
     const last = existingComments.pop();
 
@@ -6366,6 +6366,7 @@ async function main() {
                   lcovBaseArrayForMonorepo,
                   options,
               ),
+				hiddenHeader: appName ? `<!-- ${appName}-jest-reporter-action -->` : `<!-- monorepo-jest-reporter-action -->`
     });
 }
 
