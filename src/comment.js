@@ -35,6 +35,7 @@ export function commentForMonorepo(
     lcovBaseArrayForMonorepo,
     options,
 ) {
+		const { appName, base } = options;
     const html = lcovArrayForMonorepo.map(lcovObj => {
         const baseLcov = lcovBaseArrayForMonorepo.find(
             el => el.packageName === lcovObj.packageName,
@@ -69,10 +70,9 @@ export function commentForMonorepo(
         )} <br/>`;
     });
 
-    return fragment(
-        `Coverage after merging into ${b(options.base)} <p></p>`,
-        html.join(""),
-    );
+    const title = appName ? `Coverage after merging ${appName} into ${b(base)} <p></p>` : `Coverage after merging into ${b(base)} <p></p>`;
+
+    return fragment(title, html.join(""));
 }
 
 /**
@@ -81,6 +81,7 @@ export function commentForMonorepo(
  * @param {*} options
  */
 export function comment(lcov, before, options) {
+		const { appName, base } = options;
     const pbefore = before ? percentage(before) : 0;
     const pafter = before ? percentage(lcov) : 0;
     const pdiff = pafter - pbefore;
@@ -97,10 +98,10 @@ export function comment(lcov, before, options) {
         report = onlyInBefore.concat(onlyInLcov);
     }
 
+		const title = appName ? `Coverage after merging ${appName} into ${b(base)} <p></p>` : `Coverage after merging into ${b(base)} <p></p>`;
+
     return fragment(
-        `Coverage after merging ${b(options.head)} into ${b(
-            options.base,
-        )} <p></p>`,
+				title,
         table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml))),
         "\n\n",
         details(summary("Coverage Report"), tabulate(report, options)),
