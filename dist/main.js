@@ -4,8 +4,8 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var fs = require('fs');
 var fs__default = _interopDefault(fs);
-var os = _interopDefault(require('os'));
 var path = _interopDefault(require('path'));
+var os = _interopDefault(require('os'));
 var http = _interopDefault(require('http'));
 var https = _interopDefault(require('https'));
 require('net');
@@ -6035,7 +6035,7 @@ function commentForMonorepo(
     lcovBaseArrayForMonorepo,
     options,
 ) {
-	  const { hideDetails, base } = options;
+    const { hideDetails, base } = options;
     const html = lcovArrayForMonorepo.map(lcovObj => {
         const baseLcov = lcovBaseArrayForMonorepo.find(
             el => el.packageName === lcovObj.packageName,
@@ -6051,8 +6051,21 @@ function commentForMonorepo(
             ? th(arrow, " ", plus, pdiff.toFixed(2), "%")
             : "";
 
-				const coverageTable = table(tbody(tr(th(lcovObj.packageName), th(percentage(lcovObj.lcov).toFixed(2), "%"), pdiffHtml,)));
-				const detailsTable = !hideDetails ? `\n\n ${details(summary("Coverage Report"), tabulate(lcovObj.lcov, options))} <br/>` : "";
+        const coverageTable = table(
+            tbody(
+                tr(
+                    th(lcovObj.packageName),
+                    th(percentage(lcovObj.lcov).toFixed(2), "%"),
+                    pdiffHtml,
+                ),
+            ),
+        );
+        const detailsTable = !hideDetails
+            ? `\n\n ${details(
+                  summary("Coverage Report"),
+                  tabulate(lcovObj.lcov, options),
+              )} <br/>`
+            : "";
 
         return `${coverageTable} ${detailsTable}`.trim();
     });
@@ -6078,9 +6091,13 @@ function comment(lcov, before, options) {
 
     const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
 
-    const title = `Coverage after merging into ${b(base,)}<p></p>`;
-    const coverageTable = table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml)));
-    const detailsTable = !hideDetails ? `\n\n ${details(summary("Coverage Report"), tabulate(lcov, options))}` : "";
+    const title = `Coverage after merging into ${b(base)}<p></p>`;
+    const coverageTable = table(
+        tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml)),
+    );
+    const detailsTable = !hideDetails
+        ? `\n\n ${details(summary("Coverage Report"), tabulate(lcov, options))}`
+        : "";
 
     return fragment(title, coverageTable, detailsTable);
 }
@@ -6208,14 +6225,13 @@ const getLcovFiles = (dir, filelist = []) => {
         filelist = fs__default.statSync(path.join(dir, file)).isDirectory()
             ? getLcovFiles(path.join(dir, file), filelist)
             : filelist
-                  .filter(file => {
-                      return file.path.includes("lcov.info");
-                  })
+                  .filter(file => file.path.includes("lcov.info"))
                   .concat({
                       name: dir.split("/")[1],
                       path: path.join(dir, file),
                   });
     });
+
     return filelist;
 };
 
@@ -6230,14 +6246,13 @@ const getLcovBaseFiles = (dir, filelist = []) => {
         filelist = fs__default.statSync(path.join(dir, file)).isDirectory()
             ? getLcovBaseFiles(path.join(dir, file), filelist)
             : filelist
-                  .filter(file => {
-                      return file.path.includes("lcov-base.info");
-                  })
+                  .filter(file => file.path.includes("lcov-base.info"))
                   .concat({
                       name: dir.split("/")[1],
                       path: path.join(dir, file),
                   });
     });
+
     return filelist;
 };
 
@@ -6257,6 +6272,7 @@ async function main() {
         (await fs.promises.readFile(lcovFile, "utf-8").catch(err => null));
     if (!monorepoBasePath && !raw) {
         console.log(`No coverage report found at '${lcovFile}', exiting...`);
+
         return;
     }
 
@@ -6267,8 +6283,8 @@ async function main() {
         console.log(`No coverage report found at '${baseFile}', ignoring...`);
     }
 
-    let lcovArray = monorepoBasePath ? getLcovFiles(monorepoBasePath) : [];
-    let lcovBaseArray = monorepoBasePath
+    const lcovArray = monorepoBasePath ? getLcovFiles(monorepoBasePath) : [];
+    const lcovBaseArray = monorepoBasePath
         ? getLcovBaseFiles(monorepoBasePath)
         : [];
 
@@ -6302,7 +6318,7 @@ async function main() {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
-				hideDetails
+        hideDetails,
     };
 
     const lcov = !monorepoBasePath && (await parse$1(raw));
@@ -6324,7 +6340,7 @@ async function main() {
     });
 }
 
-main().catch(function(err) {
+main().catch(err => {
     console.log(err);
     core$1.setFailed(err.message);
 });
