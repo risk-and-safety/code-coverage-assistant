@@ -17,6 +17,9 @@ inputs:
   lcov-base:
     description: The location of the lcov file for the base branch. Applicable for single repo setup.
     required: false
+  hide-details:
+    description: Flag to optionally hide coverage details, this feature is useful for big repositories with lots of files.
+    required: false
 runs:
   using: node12
   main: dist/main.js

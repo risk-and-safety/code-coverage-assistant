@@ -29,6 +29,7 @@ The possible inputs for this action are:
 | `monorepo-base-path` (**Optional**) | The location of your monrepo `packages` path                                                                                                                                     |                        |
 | `lcov-file` (**Optional**)          | The location of the lcov file to read the coverage report. `Needed only for single repos`                                                                                        | `./coverage/lcov.info` |
 | `lcov-base` (**Optional**)          | The location of the lcov file resulting from running the tests in the base branch. When this is set a diff of the coverage percentages is shown. `Needed only for single repos`. |                        |
+| `hide-details` (**Optional**)       | Flag to optionally hide coverage details, this feature is useful for big repositories with lots of files.                                                                        | `false`                |
 
 ## Examples
 

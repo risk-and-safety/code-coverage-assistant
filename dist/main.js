@@ -6035,6 +6035,7 @@ function commentForMonorepo(
     lcovBaseArrayForMonorepo,
     options,
 ) {
+	  const { hideDetails, base } = options;
     const html = lcovArrayForMonorepo.map(lcovObj => {
         const baseLcov = lcovBaseArrayForMonorepo.find(
             el => el.packageName === lcovObj.packageName,
@@ -6050,22 +6051,14 @@ function commentForMonorepo(
             ? th(arrow, " ", plus, pdiff.toFixed(2), "%")
             : "";
 
-        return `${table(
-            tbody(
-                tr(
-                    th(lcovObj.packageName),
-                    th(percentage(lcovObj.lcov).toFixed(2), "%"),
-                    pdiffHtml,
-                ),
-            ),
-        )} \n\n ${details(
-            summary("Coverage Report"),
-            tabulate(lcovObj.lcov, options),
-        )} <br/>`;
+				const coverageTable = table(tbody(tr(th(lcovObj.packageName), th(percentage(lcovObj.lcov).toFixed(2), "%"), pdiffHtml,)));
+				const detailsTable = !hideDetails ? `\n\n ${details(summary("Coverage Report"), tabulate(lcovObj.lcov, options))} <br/>` : "";
+
+        return `${coverageTable} ${detailsTable}`.trim();
     });
 
     return fragment(
-        `Coverage after merging into ${b(options.base)} <p></p>`,
+        `Coverage after merging into ${b(base)} <p></p>`,
         html.join(""),
     );
 }
@@ -6081,17 +6074,15 @@ function comment(lcov, before, options) {
     const pdiff = pafter - pbefore;
     const plus = pdiff > 0 ? "+" : "";
     const arrow = pdiff === 0 ? "" : pdiff < 0 ? "▾" : "▴";
+    const { hideDetails, base } = options;
 
     const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
 
-    return fragment(
-        `Coverage after merging ${b(options.head)} into ${b(
-            options.base,
-        )} <p></p>`,
-        table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml))),
-        "\n\n",
-        details(summary("Coverage Report"), tabulate(lcov, options)),
-    );
+    const title = `Coverage after merging into ${b(base,)}<p></p>`;
+    const coverageTable = table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml)));
+    const detailsTable = !hideDetails ? `\n\n ${details(summary("Coverage Report"), tabulate(lcov, options))}` : "";
+
+    return fragment(title, coverageTable, detailsTable);
 }
 
 /**
@@ -6256,6 +6247,8 @@ async function main() {
     const token = core$1.getInput("github-token");
     const lcovFile = core$1.getInput("lcov-file") || "./coverage/lcov.info";
     const baseFile = core$1.getInput("lcov-base");
+    const hideDetails = !!core$1.getInput("hide-details");
+
     // Add base path for monorepo
     const monorepoBasePath = core$1.getInput("monorepo-base-path");
 
@@ -6309,6 +6302,7 @@ async function main() {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
+				hideDetails
     };
 
     const lcov = !monorepoBasePath && (await parse$1(raw));

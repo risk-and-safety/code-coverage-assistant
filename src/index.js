@@ -1,7 +1,7 @@
 import fs, { promises } from "fs";
+import path from "path";
 import core from "@actions/core";
 import github from "@actions/github";
-import path from "path";
 import { parse } from "./lcov";
 import { diff, diffForMonorepo } from "./comment";
 import { upsertComment } from "./github";
@@ -17,14 +17,13 @@ const getLcovFiles = (dir, filelist = []) => {
         filelist = fs.statSync(path.join(dir, file)).isDirectory()
             ? getLcovFiles(path.join(dir, file), filelist)
             : filelist
-                  .filter(file => {
-                      return file.path.includes("lcov.info");
-                  })
+                  .filter(file => file.path.includes("lcov.info"))
                   .concat({
                       name: dir.split("/")[1],
                       path: path.join(dir, file),
                   });
     });
+
     return filelist;
 };
 
@@ -39,14 +38,13 @@ const getLcovBaseFiles = (dir, filelist = []) => {
         filelist = fs.statSync(path.join(dir, file)).isDirectory()
             ? getLcovBaseFiles(path.join(dir, file), filelist)
             : filelist
-                  .filter(file => {
-                      return file.path.includes("lcov-base.info");
-                  })
+                  .filter(file => file.path.includes("lcov-base.info"))
                   .concat({
                       name: dir.split("/")[1],
                       path: path.join(dir, file),
                   });
     });
+
     return filelist;
 };
 
@@ -56,6 +54,8 @@ async function main() {
     const token = core.getInput("github-token");
     const lcovFile = core.getInput("lcov-file") || "./coverage/lcov.info";
     const baseFile = core.getInput("lcov-base");
+    const hideDetails = !!core.getInput("hide-details");
+
     // Add base path for monorepo
     const monorepoBasePath = core.getInput("monorepo-base-path");
 
@@ -64,6 +64,7 @@ async function main() {
         (await promises.readFile(lcovFile, "utf-8").catch(err => null));
     if (!monorepoBasePath && !raw) {
         console.log(`No coverage report found at '${lcovFile}', exiting...`);
+
         return;
     }
 
@@ -74,8 +75,8 @@ async function main() {
         console.log(`No coverage report found at '${baseFile}', ignoring...`);
     }
 
-    let lcovArray = monorepoBasePath ? getLcovFiles(monorepoBasePath) : [];
-    let lcovBaseArray = monorepoBasePath
+    const lcovArray = monorepoBasePath ? getLcovFiles(monorepoBasePath) : [];
+    const lcovBaseArray = monorepoBasePath
         ? getLcovBaseFiles(monorepoBasePath)
         : [];
 
@@ -109,6 +110,7 @@ async function main() {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
+        hideDetails,
     };
 
     const lcov = !monorepoBasePath && (await parse(raw));
@@ -130,7 +132,7 @@ async function main() {
     });
 }
 
-main().catch(function(err) {
+main().catch(err => {
     console.log(err);
     core.setFailed(err.message);
 });
