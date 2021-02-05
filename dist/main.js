@@ -6121,7 +6121,7 @@ function comment(lcov, before, options) {
     }
 
 		const title = appName ? `Coverage after merging ${appName} into ${b(base)} <p></p>` : `Coverage after merging into ${b(base)} <p></p>`;
-		const header = appName ? tbody(tr(th(appName, percentage(lcov).toFixed(2), '%'), pdiffHtml)) : tbody(tr(th(percentage(lcov).toFixed(2), '%'), pdiffHtml));
+		const header = appName ? tbody(tr(th(appName), th(percentage(lcov).toFixed(2), '%'), pdiffHtml)) : tbody(tr(th(percentage(lcov).toFixed(2), '%'), pdiffHtml));
 
     return fragment(
 				title,
