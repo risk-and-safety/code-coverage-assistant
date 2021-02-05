@@ -23,18 +23,18 @@ const listComments = async ({ client, context, prNumber, commentHeader, hiddenHe
     return existingComments.filter(({ body }) => body.startsWith(hiddenHeader));
 };
 
-const insertComment = async ({ client, context, prNumber, body }) =>
+const insertComment = async ({ client, context, prNumber, body }, hiddenHeader) =>
     client.issues.createComment({
         ...context.repo,
         issue_number: prNumber,
-        body: appendHiddenHeaderToComment(body),
+        body: appendHiddenHeaderToComment(body, hiddenHeader),
     });
 
-const updateComment = async ({ client, context, body, commentId }) =>
+const updateComment = async ({ client, context, body, commentId }, hiddenHeader) =>
     client.issues.updateComment({
         ...context.repo,
         comment_id: commentId,
-        body: appendHiddenHeaderToComment(body),
+        body: appendHiddenHeaderToComment(body, hiddenHeader),
     });
 
 const deleteComments = async ({ client, context, comments }) =>
@@ -68,13 +68,13 @@ const upsertComment = async ({ client, context, prNumber, body, hiddenHeader }) 
               context,
               body,
               commentId: last.id,
-          })
+          }, hiddenHeader)
         : insertComment({
               client,
               context,
               prNumber,
               body,
-          });
+          }, hiddenHeader);
 };
 
 module.exports = {
