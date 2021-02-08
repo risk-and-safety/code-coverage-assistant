@@ -25,9 +25,9 @@ const commentForMonorepo = (
 
         let arrow = "";
         if (pdiff < 0) {
-            arrow = "🔽";
+            arrow = "▾";
         } else if (pdiff > 0) {
-            arrow = "🔼";
+            arrow = "▴";
         }
 
         const pdiffHtml = baseLcov
@@ -67,9 +67,9 @@ const comment = (lcov, before, options) => {
 
     let arrow = "";
     if (pdiff < 0) {
-        arrow = "🔽";
+        arrow = "▾";
     } else if (pdiff > 0) {
-        arrow = "🔼";
+        arrow = "▴";
     }
 
     const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
