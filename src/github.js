@@ -15,7 +15,7 @@ const hiddenHeader = `<!-- monorepo-jest-reporter-action -->`;
 
 const appendHiddenHeaderToComment = body => hiddenHeader + body;
 
-const listComments = async ({ client, context, prNumber, commentHeader }) => {
+const listComments = async ({ client, context, prNumber }) => {
     const { data: existingComments } = await client.issues.listComments({
         ...context.repo,
         issue_number: prNumber,
@@ -24,21 +24,21 @@ const listComments = async ({ client, context, prNumber, commentHeader }) => {
     return existingComments.filter(({ body }) => body.startsWith(hiddenHeader));
 };
 
-const insertComment = async ({ client, context, prNumber, body }) =>
+const insertComment = ({ client, context, prNumber, body }) =>
     client.issues.createComment({
         ...context.repo,
         issue_number: prNumber,
         body: appendHiddenHeaderToComment(body),
     });
 
-const updateComment = async ({ client, context, body, commentId }) =>
+const updateComment = ({ client, context, body, commentId }) =>
     client.issues.updateComment({
         ...context.repo,
         comment_id: commentId,
         body: appendHiddenHeaderToComment(body),
     });
 
-const deleteComments = async ({ client, context, comments }) =>
+const deleteComments = ({ client, context, comments }) =>
     Promise.all(
         comments.map(({ id }) =>
             client.issues.deleteComment({
@@ -48,7 +48,7 @@ const deleteComments = async ({ client, context, comments }) =>
         ),
     );
 
-const upsertComment = async ({ client, context, prNumber, body }) => {
+export const upsertComment = async ({ client, context, prNumber, body }) => {
     const existingComments = await listComments({
         client,
         context,
@@ -75,8 +75,4 @@ const upsertComment = async ({ client, context, prNumber, body }) => {
               prNumber,
               body,
           });
-};
-
-module.exports = {
-    upsertComment,
 };
