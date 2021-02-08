@@ -31,6 +31,5 @@ const main = async () => {
 
 main().catch(err => {
     console.log(err);
-    process.exitCode = 1;
-    throw new Error(err);
+    process.exit(1);
 });

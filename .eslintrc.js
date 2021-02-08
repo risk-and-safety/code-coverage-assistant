@@ -30,7 +30,6 @@ module.exports = {
         ],
         "no-invalid-this": "error",
         "no-magic-numbers": "off",
-        "no-process-exit": "error",
         "no-restricted-imports": ["error", "lodash"],
         "no-undefined": "error",
         "no-underscore-dangle": ["error", { allow: ["__INIT_MATERIAL_UI__"] }],
