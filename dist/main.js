@@ -5925,9 +5925,7 @@ const table = tag("table");
 const tbody = tag("tbody");
 const a = tag("a");
 
-const fragment = function(...children) {
-    return children.join("");
-};
+const fragment = (...children) => children.join("");
 
 const filename = (file, indent, options) => {
     const relative = file.file.replace(options.prefix, "");
