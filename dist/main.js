@@ -6027,6 +6027,7 @@ const tabulate = (lcov, options) => {
  */
 const renderEmoji = pdiff => {
     if (pdiff.toFixed(2) < 0) return "❌";
+
     return "✅";
 };
 
@@ -6273,11 +6274,12 @@ const upsertComment = async ({
  * @param  {string} dir Dir path string.
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
-const getLcovFiles = (dir, filelist = []) => {
+const getLcovFiles = (dir, filelist) => {
+    var fileArray = filelist || [];
     fs__default.readdirSync(dir).forEach(file => {
-        filelist = fs__default.statSync(path.join(dir, file)).isDirectory()
-            ? getLcovFiles(path.join(dir, file), filelist)
-            : filelist
+        fileArray = fs__default.statSync(path.join(dir, file)).isDirectory()
+            ? getLcovFiles(path.join(dir, file), fileArray)
+            : fileArray
                   .filter(f => f.path.includes("lcov.info"))
                   .concat({
                       name: dir.split("/")[1],
@@ -6285,7 +6287,7 @@ const getLcovFiles = (dir, filelist = []) => {
                   });
     });
 
-    return filelist;
+    return fileArray;
 };
 
 /**
@@ -6294,11 +6296,12 @@ const getLcovFiles = (dir, filelist = []) => {
  * @param  {string} dir Dir path string.
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
-const getLcovBaseFiles = (dir, filelist = []) => {
+const getLcovBaseFiles = (dir, filelist) => {
+    var fileArray = filelist || [];
     fs__default.readdirSync(dir).forEach(file => {
-        filelist = fs__default.statSync(path.join(dir, file)).isDirectory()
-            ? getLcovBaseFiles(path.join(dir, file), filelist)
-            : filelist
+        fileArray = fs__default.statSync(path.join(dir, file)).isDirectory()
+            ? getLcovBaseFiles(path.join(dir, file), fileArray)
+            : fileArray
                   .filter(f => f.path.includes("lcov-base.info"))
                   .concat({
                       name: dir.split("/")[1],
@@ -6306,7 +6309,7 @@ const getLcovBaseFiles = (dir, filelist = []) => {
                   });
     });
 
-    return filelist;
+    return fileArray;
 };
 
 const main = async () => {
@@ -6374,7 +6377,7 @@ const main = async () => {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
-				appName,
+        appName,
     };
 
     const lcov = !monorepoBasePath && (await parse$1(raw));
@@ -6393,7 +6396,9 @@ const main = async () => {
                   lcovBaseArrayForMonorepo,
                   options,
               ),
-				hiddenHeader: appName ? `<!-- ${appName}-code-coverage-assistant -->` : `<!-- monorepo-code-coverage-assistant -->`
+        hiddenHeader: appName
+            ? `<!-- ${appName}-code-coverage-assistant -->`
+            : `<!-- monorepo-code-coverage-assistant -->`,
     });
 };
 

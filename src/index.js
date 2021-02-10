@@ -12,11 +12,12 @@ import { upsertComment } from "./github";
  * @param  {string} dir Dir path string.
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
-const getLcovFiles = (dir, filelist = []) => {
+const getLcovFiles = (dir, filelist) => {
+    let fileArray = filelist || [];
     fs.readdirSync(dir).forEach(file => {
-        filelist = fs.statSync(path.join(dir, file)).isDirectory()
-            ? getLcovFiles(path.join(dir, file), filelist)
-            : filelist
+        fileArray = fs.statSync(path.join(dir, file)).isDirectory()
+            ? getLcovFiles(path.join(dir, file), fileArray)
+            : fileArray
                   .filter(f => f.path.includes("lcov.info"))
                   .concat({
                       name: dir.split("/")[1],
@@ -24,7 +25,7 @@ const getLcovFiles = (dir, filelist = []) => {
                   });
     });
 
-    return filelist;
+    return fileArray;
 };
 
 /**
@@ -33,11 +34,12 @@ const getLcovFiles = (dir, filelist = []) => {
  * @param  {string} dir Dir path string.
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
-const getLcovBaseFiles = (dir, filelist = []) => {
+const getLcovBaseFiles = (dir, filelist) => {
+    let fileArray = filelist || [];
     fs.readdirSync(dir).forEach(file => {
-        filelist = fs.statSync(path.join(dir, file)).isDirectory()
-            ? getLcovBaseFiles(path.join(dir, file), filelist)
-            : filelist
+        fileArray = fs.statSync(path.join(dir, file)).isDirectory()
+            ? getLcovBaseFiles(path.join(dir, file), fileArray)
+            : fileArray
                   .filter(f => f.path.includes("lcov-base.info"))
                   .concat({
                       name: dir.split("/")[1],
@@ -45,7 +47,7 @@ const getLcovBaseFiles = (dir, filelist = []) => {
                   });
     });
 
-    return filelist;
+    return fileArray;
 };
 
 const main = async () => {

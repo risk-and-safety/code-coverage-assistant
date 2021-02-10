@@ -6,7 +6,6 @@ module.exports = {
         "prettier/prettier": "error",
         "arrow-body-style": ["error", "as-needed"],
         complexity: ["error", 20],
-        "no-param-reassign": "off",
         "import/prefer-default-export": "off",
         curly: "error",
         "no-await-in-loop": "off",
