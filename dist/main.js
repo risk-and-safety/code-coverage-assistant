@@ -6275,7 +6275,7 @@ const upsertComment = async ({
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
 const getLcovFiles = (dir, filelist) => {
-    var fileArray = filelist || [];
+    let fileArray = filelist || [];
     fs__default.readdirSync(dir).forEach(file => {
         fileArray = fs__default.statSync(path.join(dir, file)).isDirectory()
             ? getLcovFiles(path.join(dir, file), fileArray)
@@ -6297,7 +6297,7 @@ const getLcovFiles = (dir, filelist) => {
  * @return {string[{<package_name>: <path_to_lcov_file>}]} Array with lcove file names with package names as key.
  */
 const getLcovBaseFiles = (dir, filelist) => {
-    var fileArray = filelist || [];
+    let fileArray = filelist || [];
     fs__default.readdirSync(dir).forEach(file => {
         fileArray = fs__default.statSync(path.join(dir, file)).isDirectory()
             ? getLcovBaseFiles(path.join(dir, file), fileArray)
