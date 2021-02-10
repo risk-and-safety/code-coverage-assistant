@@ -54,6 +54,7 @@ const main = async () => {
     const token = core.getInput("github-token");
     const lcovFile = core.getInput("lcov-file") || "./coverage/lcov.info";
     const baseFile = core.getInput("lcov-base");
+    const appName = core.getInput("app-name");
     // Add base path for monorepo
     const monorepoBasePath = core.getInput("monorepo-base-path");
 
@@ -112,6 +113,7 @@ const main = async () => {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
+        appName,
     };
 
     const lcov = !monorepoBasePath && (await parse(raw));
@@ -130,6 +132,9 @@ const main = async () => {
                   lcovBaseArrayForMonorepo,
                   options,
               ),
+        hiddenHeader: appName
+            ? `<!-- ${appName}-code-coverage-assistant -->`
+            : `<!-- monorepo-code-coverage-assistant -->`,
     });
 };
 

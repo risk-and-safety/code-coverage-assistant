@@ -6021,6 +6021,28 @@ const tabulate = (lcov, options) => {
 };
 
 /**
+ * Compares two arrays of objects and returns with unique lines update
+ * @param {number} pdiff value from diff percentage
+ * @returns {string} emoji string for negative/positive pdiff
+ */
+const renderEmoji = pdiff => {
+    if (pdiff.toFixed(2) < 0) return "❌";
+    return "✅";
+};
+
+/**
+ * Compares two arrays of objects and returns with unique lines update
+ * @param {Array} otherArray
+ * @returns {Function} function with filtering non original lines
+ */
+const comparer = otherArray => current =>
+    otherArray.filter(
+        other =>
+            other.lines.found === current.lines.found &&
+            other.lines.hit === current.lines.hit,
+    ).length === 0;
+
+/**
  * Github comment for monorepo
  * @param {Array<{packageName, lcovPath}>} lcovArrayForMonorepo
  * @param {{Array<{packageName, lcovBasePath}>}} lcovBaseArrayForMonorepo
@@ -6031,6 +6053,7 @@ const commentForMonorepo = (
     lcovBaseArrayForMonorepo,
     options,
 ) => {
+    const { base } = options;
     const html = lcovArrayForMonorepo.map(lcovObj => {
         const baseLcov = lcovBaseArrayForMonorepo.find(
             el => el.packageName === lcovObj.packageName,
@@ -6049,8 +6072,23 @@ const commentForMonorepo = (
         }
 
         const pdiffHtml = baseLcov
-            ? th(arrow, " ", plus, pdiff.toFixed(2), "%")
+            ? th(
+                  renderEmoji(pdiff),
+                  " ",
+                  arrow,
+                  " ",
+                  plus,
+                  pdiff.toFixed(2),
+                  "%",
+              )
             : "";
+        let report = lcovObj.lcov;
+
+        if (baseLcov) {
+            const onlyInLcov = lcovObj.lcov.filter(comparer(baseLcov));
+            const onlyInBefore = baseLcov.filter(comparer(lcovObj.lcov));
+            report = onlyInBefore.concat(onlyInLcov);
+        }
 
         return `${table(
             tbody(
@@ -6062,14 +6100,13 @@ const commentForMonorepo = (
             ),
         )} \n\n ${details(
             summary("Coverage Report"),
-            tabulate(lcovObj.lcov, options),
+            tabulate(report, options),
         )} <br/>`;
     });
 
-    return fragment(
-        `Coverage after merging into ${b(options.base)} <p></p>`,
-        html.join(""),
-    );
+    const title = `Coverage after merging into ${b(base)} <p></p>`;
+
+    return fragment(title, html.join(""));
 };
 
 /**
@@ -6078,6 +6115,7 @@ const commentForMonorepo = (
  * @param {*} options
  */
 const comment = (lcov, before, options) => {
+    const { appName, base } = options;
     const pbefore = before ? percentage(before) : 0;
     const pafter = before ? percentage(lcov) : 0;
     const pdiff = pafter - pbefore;
@@ -6090,15 +6128,30 @@ const comment = (lcov, before, options) => {
         arrow = "▴";
     }
 
-    const pdiffHtml = before ? th(arrow, " ", plus, pdiff.toFixed(2), "%") : "";
+    const pdiffHtml = before
+        ? th(renderEmoji(pdiff), " ", arrow, " ", plus, pdiff.toFixed(2), "%")
+        : "";
+
+    let report = lcov;
+
+    if (before) {
+        const onlyInLcov = lcov.filter(comparer(before));
+        const onlyInBefore = before.filter(comparer(lcov));
+        report = onlyInBefore.concat(onlyInLcov);
+    }
+
+    const title = `Coverage after merging into ${b(base)} <p></p>`;
+    const header = appName
+        ? tbody(
+              tr(th(appName), th(percentage(lcov).toFixed(2), "%"), pdiffHtml),
+          )
+        : tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml));
 
     return fragment(
-        `Coverage after merging ${b(options.head)} into ${b(
-            options.base,
-        )} <p></p>`,
-        table(tbody(tr(th(percentage(lcov).toFixed(2), "%"), pdiffHtml))),
+        title,
+        table(header),
         "\n\n",
-        details(summary("Coverage Report"), tabulate(lcov, options)),
+        details(summary("Coverage Report"), tabulate(report, options)),
     );
 };
 
@@ -6136,11 +6189,10 @@ const diffForMonorepo = (
 // Every comment written by our action will have this hidden
 // header on top, and will be used to identify which comments
 // to update/delete etc
-const hiddenHeader = `<!-- monorepo-jest-reporter-action -->`;
 
-const appendHiddenHeaderToComment = body => hiddenHeader + body;
+const appendHiddenHeaderToComment = (body, hiddenHeader) => hiddenHeader + body;
 
-const listComments = async ({ client, context, prNumber }) => {
+const listComments = async ({ client, context, prNumber, hiddenHeader }) => {
     const { data: existingComments } = await client.issues.listComments({
         ...context.repo,
         issue_number: prNumber,
@@ -6149,18 +6201,18 @@ const listComments = async ({ client, context, prNumber }) => {
     return existingComments.filter(({ body }) => body.startsWith(hiddenHeader));
 };
 
-const insertComment = ({ client, context, prNumber, body }) =>
+const insertComment = ({ client, context, prNumber, body }, hiddenHeader) =>
     client.issues.createComment({
         ...context.repo,
         issue_number: prNumber,
-        body: appendHiddenHeaderToComment(body),
+        body: appendHiddenHeaderToComment(body, hiddenHeader),
     });
 
-const updateComment = ({ client, context, body, commentId }) =>
+const updateComment = ({ client, context, body, commentId }, hiddenHeader) =>
     client.issues.updateComment({
         ...context.repo,
         comment_id: commentId,
-        body: appendHiddenHeaderToComment(body),
+        body: appendHiddenHeaderToComment(body, hiddenHeader),
     });
 
 const deleteComments = ({ client, context, comments }) =>
@@ -6173,11 +6225,18 @@ const deleteComments = ({ client, context, comments }) =>
         ),
     );
 
-const upsertComment = async ({ client, context, prNumber, body }) => {
+const upsertComment = async ({
+    client,
+    context,
+    prNumber,
+    body,
+    hiddenHeader,
+}) => {
     const existingComments = await listComments({
         client,
         context,
         prNumber,
+        hiddenHeader,
     });
     const last = existingComments.pop();
 
@@ -6188,18 +6247,24 @@ const upsertComment = async ({ client, context, prNumber, body }) => {
     });
 
     return last
-        ? updateComment({
-              client,
-              context,
-              body,
-              commentId: last.id,
-          })
-        : insertComment({
-              client,
-              context,
-              prNumber,
-              body,
-          });
+        ? updateComment(
+              {
+                  client,
+                  context,
+                  body,
+                  commentId: last.id,
+              },
+              hiddenHeader,
+          )
+        : insertComment(
+              {
+                  client,
+                  context,
+                  prNumber,
+                  body,
+              },
+              hiddenHeader,
+          );
 };
 
 /**
@@ -6250,6 +6315,7 @@ const main = async () => {
     const token = core$1.getInput("github-token");
     const lcovFile = core$1.getInput("lcov-file") || "./coverage/lcov.info";
     const baseFile = core$1.getInput("lcov-base");
+    const appName = core$1.getInput("app-name");
     // Add base path for monorepo
     const monorepoBasePath = core$1.getInput("monorepo-base-path");
 
@@ -6308,6 +6374,7 @@ const main = async () => {
         prefix: `${process.env.GITHUB_WORKSPACE}/`,
         head: context.payload.pull_request.head.ref,
         base: context.payload.pull_request.base.ref,
+				appName,
     };
 
     const lcov = !monorepoBasePath && (await parse$1(raw));
@@ -6326,6 +6393,7 @@ const main = async () => {
                   lcovBaseArrayForMonorepo,
                   options,
               ),
+				hiddenHeader: appName ? `<!-- ${appName}-code-coverage-assistant -->` : `<!-- monorepo-code-coverage-assistant -->`
     });
 };
 
